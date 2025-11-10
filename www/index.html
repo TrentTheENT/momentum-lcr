@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Momentum (LCR)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background: #000;
+        }
+        
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slides-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            position: relative;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .slide {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Dashboard Slide - Futuristic Minimal White */
+        .dashboard-slide {
+            background: #fafafa;
+            padding: 0;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 1px;
+        }
+        
+        .bento-box {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .bento-box:hover {
+            background: #f8f8f8;
+            border-color: rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        
+        .bento-box.white {
+            background: #fff;
+            color: #1a1a1a;
+        }
+        
+        /* Grid Layout - Mondrian Style */
+        .bento-1 { grid-column: 1 / 3; grid-row: 1 / 3; }
+        .bento-2 { grid-column: 3 / 5; grid-row: 1 / 2; }
+        .bento-3 { grid-column: 3 / 4; grid-row: 2 / 4; }
+        .bento-4 { grid-column: 4 / 5; grid-row: 2 / 3; }
+        .bento-5 { grid-column: 1 / 2; grid-row: 3 / 5; }
+        .bento-6 { grid-column: 2 / 4; grid-row: 3 / 4; }
+        .bento-7 { grid-column: 4 / 5; grid-row: 3 / 5; }
+        .bento-8 { grid-column: 1 / 3; grid-row: 4 / 6; }
+        .bento-9 { grid-column: 3 / 5; grid-row: 4 / 5; }
+        .bento-10 { grid-column: 3 / 4; grid-row: 5 / 7; }
+        .bento-11 { grid-column: 4 / 5; grid-row: 5 / 6; }
+        .bento-12 { grid-column: 1 / 2; grid-row: 5 / 7; }
+        .bento-13 { grid-column: 2 / 4; grid-row: 6 / 7; }
+        .bento-14 { grid-column: 4 / 5; grid-row: 6 / 7; }
+        
+        .widget-label {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .widget-value {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 6px;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .widget-subvalue {
+            font-size: 11px;
+            font-weight: 500;
+            color: #888;
+        }
+        
+        .widget-list {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.6;
+            list-style: none;
+        }
+        
+        .widget-list li {
+            margin-bottom: 4px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 2px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1a1a1a 0%, #333 100%);
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .category-link {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid currentColor;
+            opacity: 0.8;
+        }
+        
+        .time-display {
+            font-size: 52px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            color: #1a1a1a;
+        }
+        
+        .date-display {
+            font-size: 11px;
+            font-weight: 500;
+            color: #888;
+            margin-top: 6px;
+        }
+        
+        .streak-number {
+            font-size: 60px;
+            font-weight: 700;
+            line-height: 1;
+            color: #1a1a1a;
+        }
+        
+        .streak-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #888;
+        }
+        
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 70px;
+            margin-top: 12px;
+        }
+        
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #1a1a1a 0%, #333 100%);
+            min-height: 4px;
+            transition: height 0.3s ease;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .activity-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 4px 4px 4px 0;
+            background: #f5f5f5;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+        
+        /* Brain Dump Slide */
+        .brain-dump-slide {
+            background: #3b82f6;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slide-header {
+            margin-bottom: 24px;
+        }
+        
+        .slide-title {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        
+        .slide-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .input-area {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 400;
+            resize: none;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .input-area::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .action-btn.primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+        
+        .action-btn.primary:hover {
+            background: #fff;
+        }
+        
+        /* Header */
+        .header {
+            width: 100%;
+            height: 60px;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            position: relative;
+        }
+        
+        .header-text {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #1a1a1a;
+        }
+        
+        .menu-btn {
+            position: absolute;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+        }
+        
+        .menu-btn:hover {
+            background: #f5f5f5;
+            border-color: rgba(0, 0, 0, 0.15);
+        }
+        
+        .back-btn {
+            position: absolute;
+            left: 16px;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: transparent;
+            color: #1a1a1a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+        }
+        
+        .back-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        /* Menu Dropdown */
+        .menu-dropdown {
+            position: absolute;
+            top: 70px;
+            right: 16px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .menu-dropdown.show {
+            display: block;
+        }
+        
+        .menu-item {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a1a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-item:hover {
+            background: #f5f5f5;
+        }
+        
+        /* Music Player */
+        .music-player {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 20;
+        }
+        
+        .music-control {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        .music-control:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .music-info {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.05em;
+        }
+        
+        .menu-icon {
+            width: 18px;
+            height: 2px;
+            background: #1a1a1a;
+            position: relative;
+        }
+        
+        .menu-icon::before,
+        .menu-icon::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 2px;
+            background: #1a1a1a;
+            left: 0;
+        }
+        
+        .menu-icon::before {
+            top: -6px;
+        }
+        
+        .menu-icon::after {
+            top: 6px;
+        }
+        
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <button id="backBtn" class="back-btn" style="display: none;">←</button>
+            <div class="header-text" id="headerText">Momentum</div>
+            <button id="menuBtn" class="menu-btn">
+                <div class="menu-icon"></div>
+            </button>
+            <div id="menuDropdown" class="menu-dropdown">
+                <div class="menu-item" data-slide="0">Dashboard</div>
+                <div class="menu-item" data-slide="1">Focus</div>
+                <div class="menu-item" data-slide="2">Flow</div>
+                <div class="menu-item" data-slide="3">Rest</div>
+                <div class="menu-item" data-slide="4">Silence</div>
+            </div>
+        </div>
+        
+        <!-- Slides Container -->
+        <div id="slidesContainer" class="slides-container">
+            <!-- Slides will be dynamically generated -->
+        </div>
+        
+    </div>
+
+    <script>
+        // Lane configurations
+        const LANE_CONFIGS = [
+            {
+                id: 0,
+                name: 'Focus',
+                color: '#3b82f6', // Blue
+                items: []
+            },
+            {
+                id: 1,
+                name: 'Flow',
+                color: '#22c55e', // Green
+                items: []
+            },
+            {
+                id: 2,
+                name: 'Rest',
+                color: '#a855f7', // Purple
+                items: []
+            },
+            {
+                id: 3,
+                name: 'Silence',
+                color: '#6b7280', // Gray
+                items: []
+            }
+        ];
+
+        // State
+        let currentSlideIndex = 0; // 0 = dashboard, 1-4 = brain dump slides
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        const SWIPE_THRESHOLD = 50;
+        const SWIPE_VELOCITY_THRESHOLD = 0.3;
+
+        // DOM Elements
+        const slidesContainer = document.getElementById('slidesContainer');
+        const headerText = document.getElementById('headerText');
+        const backBtn = document.getElementById('backBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        
+        // Music state
+        let currentAudio = null;
+        let isPlaying = false;
+
+        // Supabase Configuration
+        const SUPABASE_URL = ''; // Add your Supabase URL
+        const SUPABASE_ANON_KEY = ''; // Add your Supabase anon key
+        let supabase = null;
+        
+        // Initialize Supabase
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        
+        // AI API Configuration (using OpenAI-compatible API)
+        const AI_API_KEY = ''; // User needs to add their API key
+        const AI_API_URL = 'https://api.openai.com/v1/chat/completions';
+        
+        // User authentication state
+        let currentUser = null;
+        let userId = null;
+
+        // Initialize
+        async function init() {
+            await checkAuth();
+            await loadData();
+            renderAllSlides();
+            setupEventListeners();
+            updateSlidePosition();
+            startPatternMatching();
+        }
+        
+        // Check authentication
+        async function checkAuth() {
+            if (!supabase) {
+                // Fallback to localStorage if Supabase not configured
+                userId = 'local-' + Date.now();
+                return;
+            }
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    userId = session.user.id;
+                } else {
+                    // Anonymous user - create or get local user
+                    userId = localStorage.getItem('momentum_user_id') || 'local-' + Date.now();
+                    localStorage.setItem('momentum_user_id', userId);
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                userId = localStorage.getItem('momentum_user_id') || 'local-' + Date.now();
+            }
+        }
+
+        // Load data from Supabase or localStorage
+        async function loadData() {
+            if (supabase && userId && !userId.startsWith('local-')) {
+                try {
+                    // Load tasks from Supabase
+                    const { data: tasks, error } = await supabase
+                        .from('tasks')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .eq('completed', false)
+                        .order('created_at', { ascending: false });
+                    
+                    if (!error && tasks) {
+                        // Group tasks by lane
+                        LANE_CONFIGS.forEach((config, index) => {
+                            config.items = tasks
+                                .filter(task => task.lane_id === index)
+                                .map(task => task.content);
+                        });
+                        
+                        // Log event
+                        await logEvent('data_loaded', null, { task_count: tasks.length });
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error loading from Supabase:', error);
+                }
+            }
+            
+            // Fallback to localStorage
+            const saved = localStorage.getItem('momentumData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                LANE_CONFIGS.forEach((config, index) => {
+                    if (data[index]) {
+                        config.items = data[index].items || [];
+                    }
+                });
+            }
+        }
+
+        // Save data to Supabase or localStorage
+        async function saveData() {
+            if (supabase && userId && !userId.startsWith('local-')) {
+                try {
+                    // Get all current tasks
+                    const { data: existingTasks } = await supabase
+                        .from('tasks')
+                        .select('id, lane_id, content')
+                        .eq('user_id', userId)
+                        .eq('completed', false);
+                    
+                    const existingMap = new Map();
+                    if (existingTasks) {
+                        existingTasks.forEach(task => {
+                            const key = `${task.lane_id}-${task.content}`;
+                            existingMap.set(key, task.id);
+                        });
+                    }
+                    
+                    // Save tasks for each lane
+                    for (let laneIndex = 0; laneIndex < LANE_CONFIGS.length; laneIndex++) {
+                        const items = LANE_CONFIGS[laneIndex].items;
+                        
+                        for (const item of items) {
+                            const key = `${laneIndex}-${item}`;
+                            if (!existingMap.has(key)) {
+                                // Create new task
+                                const { error } = await supabase
+                                    .from('tasks')
+                                    .insert({
+                                        user_id: userId,
+                                        lane_id: laneIndex,
+                                        content: item,
+                                        completed: false
+                                    });
+                                
+                                if (!error) {
+                                    await logEvent('task_created', null, { lane_id: laneIndex });
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Update stats
+                    await updateStats();
+                    return;
+                } catch (error) {
+                    console.error('Error saving to Supabase:', error);
+                }
+            }
+            
+            // Fallback to localStorage
+            const data = LANE_CONFIGS.map(config => ({
+                name: config.name,
+                items: config.items
+            }));
+            localStorage.setItem('momentumData', JSON.stringify(data));
+        }
+        
+        // Log event for pattern matching
+        async function logEvent(eventType, taskId = null, metadata = {}) {
+            if (!supabase || !userId || userId.startsWith('local-')) {
+                return;
+            }
+            
+            try {
+                await supabase
+                    .from('events')
+                    .insert({
+                        user_id: userId,
+                        event_type: eventType,
+                        lane_id: metadata.lane_id || null,
+                        task_id: taskId,
+                        metadata: metadata
+                    });
+            } catch (error) {
+                console.error('Error logging event:', error);
+            }
+        }
+        
+        // Update statistics
+        async function updateStats() {
+            if (!supabase || !userId || userId.startsWith('local-')) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase.rpc('update_daily_stats', {
+                    user_uuid: userId,
+                    stat_date: new Date().toISOString().split('T')[0]
+                });
+                
+                if (error) {
+                    console.error('Error updating stats:', error);
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+        
+        // Pattern matching system
+        async function startPatternMatching() {
+            if (!supabase || !userId || userId.startsWith('local-')) {
+                return;
+            }
+            
+            // Run pattern detection every 5 minutes
+            setInterval(async () => {
+                await detectPatterns();
+            }, 5 * 60 * 1000);
+            
+            // Initial pattern detection
+            await detectPatterns();
+        }
+        
+        // Detect patterns in user behavior
+        async function detectPatterns() {
+            if (!supabase || !userId || userId.startsWith('local-')) {
+                return;
+            }
+            
+            try {
+                // Detect time patterns
+                const { data: timePatterns } = await supabase.rpc('detect_time_patterns', {
+                    user_uuid: userId,
+                    days_back: 7
+                });
+                
+                if (timePatterns) {
+                    // Save pattern if significant
+                    const confidence = 0.7; // Adjust based on pattern strength
+                    await supabase
+                        .from('patterns')
+                        .upsert({
+                            user_id: userId,
+                            pattern_type: 'time_pattern',
+                            pattern_data: timePatterns,
+                            confidence: confidence
+                        }, {
+                            onConflict: 'user_id,pattern_type'
+                        });
+                }
+                
+                // Check for achievements
+                await checkAchievements();
+            } catch (error) {
+                console.error('Error detecting patterns:', error);
+            }
+        }
+        
+        // Check and unlock achievements
+        async function checkAchievements() {
+            if (!supabase || !userId || userId.startsWith('local-')) {
+                return;
+            }
+            
+            try {
+                // Get current stats
+                const { data: stats } = await supabase
+                    .from('stats')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('stat_date', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (!stats) return;
+                
+                // Check for streak achievement
+                if (stats.streak_days >= 7) {
+                    const { data: existing } = await supabase
+                        .from('achievements')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .eq('achievement_type', 'streak_7')
+                        .single();
+                    
+                    if (!existing) {
+                        await supabase
+                            .from('achievements')
+                            .insert({
+                                user_id: userId,
+                                achievement_type: 'streak_7',
+                                achievement_data: { streak_days: stats.streak_days }
+                            });
+                        
+                        // Show achievement notification
+                        showAchievement('7 Day Streak! 🔥');
+                    }
+                }
+                
+                // Check for consistency achievement
+                if (stats.consistency_score >= 80) {
+                    const { data: existing } = await supabase
+                        .from('achievements')
+                        .select('id')
+                        .eq('user_id', userId)
+                        .eq('achievement_type', 'consistency_80')
+                        .single();
+                    
+                    if (!existing) {
+                        await supabase
+                            .from('achievements')
+                            .insert({
+                                user_id: userId,
+                                achievement_type: 'consistency_80',
+                                achievement_data: { consistency_score: stats.consistency_score }
+                            });
+                        
+                        showAchievement('Consistency Master! ⭐');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking achievements:', error);
+            }
+        }
+        
+        // Show achievement notification
+        function showAchievement(message) {
+            // Create a temporary notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #22c55e;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideDown 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Calculate stats (with Supabase integration)
+        async function calculateStats() {
+            const totalItems = LANE_CONFIGS.reduce((sum, config) => sum + config.items.length, 0);
+            
+            let consistency = Math.min(100, Math.floor((totalItems / 20) * 100));
+            let streakDays = 0;
+            let weeklyActivity = [65, 80, 45, 90, 70, 55, 85]; // Default placeholder
+            
+            // Try to get real stats from Supabase
+            if (supabase && userId && !userId.startsWith('local-')) {
+                try {
+                    const { data: stats } = await supabase
+                        .from('stats')
+                        .select('consistency_score, streak_days')
+                        .eq('user_id', userId)
+                        .order('stat_date', { ascending: false })
+                        .limit(1)
+                        .single();
+                    
+                    if (stats) {
+                        consistency = Math.round(stats.consistency_score || consistency);
+                        streakDays = stats.streak_days || 0;
+                    }
+                    
+                    // Get weekly activity from events
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    
+                    const { data: events } = await supabase
+                        .from('events')
+                        .select('created_at')
+                        .eq('user_id', userId)
+                        .gte('created_at', weekAgo.toISOString());
+                    
+                    if (events && events.length > 0) {
+                        // Group events by day of week
+                        weeklyActivity = [0, 0, 0, 0, 0, 0, 0];
+                        events.forEach(event => {
+                            const day = new Date(event.created_at).getDay();
+                            weeklyActivity[day] = (weeklyActivity[day] || 0) + 1;
+                        });
+                        // Normalize to percentage
+                        const max = Math.max(...weeklyActivity);
+                        weeklyActivity = weeklyActivity.map(count => 
+                            max > 0 ? Math.round((count / max) * 100) : 0
+                        );
+                    }
+                } catch (error) {
+                    console.error('Error loading stats:', error);
+                }
+            }
+            
+            const favoriteActivities = ['Coding', 'Reading', 'Design', 'Music', 'Writing'];
+            
+            return {
+                totalItems,
+                consistency,
+                daysWithoutDrinking: streakDays,
+                favoriteActivities,
+                weeklyActivity
+            };
+        }
+
+        // Render all slides
+        async function renderSlides() {
+            slidesContainer.innerHTML = '';
+            
+            // Dashboard slide (index 0) - Mondrian Bento Box
+            const dashboardSlide = document.createElement('div');
+            dashboardSlide.className = 'slide dashboard-slide';
+            
+            const stats = await calculateStats();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            
+            // Widget 1: Time (Large)
+            const widget1 = createBentoBox('bento-1', 'white', 'Current Time');
+            widget1.innerHTML = `
+                <div class="widget-label">Time</div>
+                <div class="time-display" id="currentTime">${timeStr}</div>
+                <div class="date-display">${dateStr}</div>
+            `;
+            dashboardSlide.appendChild(widget1);
+            
+            // Widget 2: Consistency
+            const widget2 = createBentoBox('bento-2', 'white', 'Consistency');
+            widget2.innerHTML = `
+                <div class="widget-label">Consistency</div>
+                <div class="widget-value">${stats.consistency}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${stats.consistency}%"></div>
+                </div>
+            `;
+            dashboardSlide.appendChild(widget2);
+            
+            // Widget 3: Days Without Drinking
+            const widget3 = createBentoBox('bento-3', 'white', 'Streak');
+            widget3.innerHTML = `
+                <div class="widget-label">Days Without</div>
+                <div class="streak-number">${stats.daysWithoutDrinking}</div>
+                <div class="streak-label">Days Clean</div>
+            `;
+            dashboardSlide.appendChild(widget3);
+            
+            // Widget 4: Total Items
+            const widget4 = createBentoBox('bento-4', 'white', 'Total');
+            widget4.innerHTML = `
+                <div class="widget-label">Total Items</div>
+                <div class="widget-value">${stats.totalItems}</div>
+                <div class="widget-subvalue">Across all categories</div>
+            `;
+            dashboardSlide.appendChild(widget4);
+            
+            // Widget 5: Focus Category
+            const widget5 = createBentoBox('bento-5', 'white', 'Focus', 0);
+            widget5.innerHTML = `
+                <div class="widget-label">Focus</div>
+                <div class="widget-value">${LANE_CONFIGS[0].items.length}</div>
+                <div class="widget-subvalue">items</div>
+                <div class="category-link">Tap to edit →</div>
+            `;
+            dashboardSlide.appendChild(widget5);
+            
+            // Widget 6: Weekly Activity Chart
+            const widget6 = createBentoBox('bento-6', 'white', 'Weekly Activity');
+            const chartBars = stats.weeklyActivity.map(height => 
+                `<div class="chart-bar" style="height: ${height}%"></div>`
+            ).join('');
+            widget6.innerHTML = `
+                <div class="widget-label">This Week</div>
+                <div class="chart-bars">${chartBars}</div>
+            `;
+            dashboardSlide.appendChild(widget6);
+            
+            // Widget 7: Flow Category
+            const widget7 = createBentoBox('bento-7', 'white', 'Flow', 1);
+            widget7.innerHTML = `
+                <div class="widget-label">Flow</div>
+                <div class="widget-value">${LANE_CONFIGS[1].items.length}</div>
+                <div class="widget-subvalue">items</div>
+                <div class="category-link">Tap to edit →</div>
+            `;
+            dashboardSlide.appendChild(widget7);
+            
+            // Widget 8: Favorite Activities
+            const widget8 = createBentoBox('bento-8', 'white', 'Favorites');
+            const activitiesHtml = stats.favoriteActivities.map(act => 
+                `<span class="activity-tag">${act}</span>`
+            ).join('');
+            widget8.innerHTML = `
+                <div class="widget-label">Favorite Activities</div>
+                <div style="margin-top: 12px;">${activitiesHtml}</div>
+            `;
+            dashboardSlide.appendChild(widget8);
+            
+            // Widget 9: Rest Category
+            const widget9 = createBentoBox('bento-9', 'white', 'Rest', 2);
+            widget9.innerHTML = `
+                <div class="widget-label">Rest</div>
+                <div class="widget-value">${LANE_CONFIGS[2].items.length}</div>
+                <div class="widget-subvalue">items</div>
+                <div class="category-link">Tap to edit →</div>
+            `;
+            dashboardSlide.appendChild(widget9);
+            
+            // Widget 10: Silence Category
+            const widget10 = createBentoBox('bento-10', 'white', 'Silence', 3);
+            widget10.innerHTML = `
+                <div class="widget-label">Silence</div>
+                <div class="widget-value">${LANE_CONFIGS[3].items.length}</div>
+                <div class="widget-subvalue">items</div>
+                <div class="category-link">Tap to edit →</div>
+            `;
+            dashboardSlide.appendChild(widget10);
+            
+            // Widget 11: Consistency Streak
+            const widget11 = createBentoBox('bento-11', 'white', 'Streak');
+            widget11.innerHTML = `
+                <div class="widget-label">Day Streak</div>
+                <div class="widget-value">7</div>
+                <div class="widget-subvalue">days</div>
+            `;
+            dashboardSlide.appendChild(widget11);
+            
+            // Widget 12: Quick Stats
+            const widget12 = createBentoBox('bento-12', 'white', 'Stats');
+            widget12.innerHTML = `
+                <div class="widget-label">Quick Stats</div>
+                <ul class="widget-list">
+                    <li>Most Active: Focus</li>
+                    <li>This Week: 42 items</li>
+                    <li>Avg/Day: 6</li>
+                </ul>
+            `;
+            dashboardSlide.appendChild(widget12);
+            
+            // Widget 13: Recent Activity
+            const widget13 = createBentoBox('bento-13', 'white', 'Recent');
+            const recentItems = LANE_CONFIGS.flatMap(c => c.items).slice(0, 3);
+            const recentHtml = recentItems.length > 0 
+                ? recentItems.map(item => `<li>${item.substring(0, 30)}${item.length > 30 ? '...' : ''}</li>`).join('')
+                : '<li>No recent activity</li>';
+            widget13.innerHTML = `
+                <div class="widget-label">Recent Activity</div>
+                <ul class="widget-list">${recentHtml}</ul>
+            `;
+            dashboardSlide.appendChild(widget13);
+            
+            // Widget 14: Category Summary
+            const widget14 = createBentoBox('bento-14', 'white', 'Summary');
+            widget14.innerHTML = `
+                <div class="widget-label">Categories</div>
+                <div style="margin-top: 8px; font-size: 10px; font-weight: 600; color: #666;">
+                    ${LANE_CONFIGS.map(c => `${c.name}: ${c.items.length}`).join(' • ')}
+                </div>
+            `;
+            dashboardSlide.appendChild(widget14);
+            
+            slidesContainer.appendChild(dashboardSlide);
+            
+            // Update time every minute
+            setInterval(() => {
+                const timeEl = document.getElementById('currentTime');
+                if (timeEl) {
+                    const now = new Date();
+                    timeEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                }
+            }, 60000);
+        }
+        
+        // Create bento box widget
+        function createBentoBox(className, colorClass, label, categoryIndex = null) {
+            const box = document.createElement('div');
+            box.className = `bento-box ${className} ${colorClass}`;
+            
+            if (categoryIndex !== null) {
+                box.addEventListener('click', () => {
+                    switchToSlide(categoryIndex + 1);
+                });
+            }
+            
+            return box;
+        }
+        
+        // Stop music when switching slides
+        function stopMusic() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            isPlaying = false;
+            document.querySelectorAll('.music-control').forEach(btn => {
+                btn.textContent = '▶';
+            });
+        }
+        
+        // Render brain dump slides
+        function renderBrainDumpSlides() {
+            // Brain dump slides (index 1-4)
+            LANE_CONFIGS.forEach((config, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'slide brain-dump-slide';
+                slide.style.backgroundColor = config.color;
+                
+                const header = document.createElement('div');
+                header.className = 'slide-header';
+                
+                const title = document.createElement('div');
+                title.className = 'slide-title';
+                title.textContent = config.name;
+                
+                const subtitle = document.createElement('div');
+                subtitle.className = 'slide-subtitle';
+                subtitle.textContent = 'Brain dump everything here';
+                
+                header.appendChild(title);
+                header.appendChild(subtitle);
+                
+                const textarea = document.createElement('textarea');
+                textarea.className = 'input-area';
+                textarea.placeholder = 'Type or paste anything... thoughts, tasks, ideas, notes...';
+                textarea.id = `input-${index}`;
+                textarea.value = config.items.join('\n');
+                
+                const buttons = document.createElement('div');
+                buttons.className = 'action-buttons';
+                
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'action-btn primary';
+                saveBtn.textContent = 'Save';
+                saveBtn.addEventListener('click', () => {
+                    saveCategoryItems(index, textarea.value);
+                });
+                
+                const aiBtn = document.createElement('button');
+                aiBtn.className = 'action-btn';
+                aiBtn.textContent = 'AI Organize';
+                aiBtn.addEventListener('click', () => {
+                    organizeWithAI(index, textarea.value);
+                });
+                
+                buttons.appendChild(saveBtn);
+                buttons.appendChild(aiBtn);
+                
+                // Music player
+                const musicPlayer = document.createElement('div');
+                musicPlayer.className = 'music-player';
+                musicPlayer.id = `music-player-${index}`;
+                musicPlayer.innerHTML = `
+                    <div class="music-control" id="play-btn-${index}">▶</div>
+                    <div class="music-info">Heavy Metal</div>
+                `;
+                
+                slide.appendChild(header);
+                slide.appendChild(textarea);
+                slide.appendChild(buttons);
+                slide.appendChild(musicPlayer);
+                
+                // Music control
+                const playBtn = musicPlayer.querySelector(`#play-btn-${index}`);
+                playBtn.addEventListener('click', () => {
+                    toggleMusic(index);
+                });
+                
+                slidesContainer.appendChild(slide);
+            });
+        }
+        
+        // Toggle music
+        function toggleMusic(categoryIndex) {
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                isPlaying = false;
+                document.querySelectorAll('.music-control').forEach(btn => {
+                    btn.textContent = '▶';
+                });
+            } else {
+                // Play heavy metal (using a placeholder - user can add their own)
+                // For demo, we'll use a data URL or suggest adding actual music files
+                const playBtn = document.querySelector(`#play-btn-${categoryIndex}`);
+                playBtn.textContent = '⏸';
+                
+                // Note: In production, you'd load actual audio files
+                // For now, this is a placeholder structure
+                alert('Add your heavy metal playlist! Replace this with actual audio files.');
+            }
+        }
+        
+        // Render all slides (complete)
+        async function renderAllSlides() {
+            await renderSlides();
+            renderBrainDumpSlides();
+        }
+
+        // Save category items
+        async function saveCategoryItems(categoryIndex, text) {
+            const items = text.split('\n').filter(item => item.trim().length > 0);
+            LANE_CONFIGS[categoryIndex].items = items;
+            await saveData();
+            await logEvent('lane_updated', null, { lane_id: categoryIndex, item_count: items.length });
+            renderAllSlides();
+            updateSlidePosition();
+        }
+
+        // Organize with AI
+        async function organizeWithAI(categoryIndex, text) {
+            if (!AI_API_KEY) {
+                alert('Please add your OpenAI API key in the code to use AI features.');
+                return;
+            }
+            
+            const aiBtn = document.querySelector(`#input-${categoryIndex}`).nextElementSibling.querySelector('.action-btn:last-child');
+            aiBtn.classList.add('loading');
+            aiBtn.textContent = 'Organizing...';
+            
+            try {
+                const response = await fetch(AI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are a helpful assistant that organizes brain dumps into clear, actionable items. Return only a list of items, one per line, with no numbering or bullets.'
+                            },
+                            {
+                                role: 'user',
+                                content: `Organize this brain dump into clear, concise items:\n\n${text}`
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
+                    })
+                });
+                
+                const data = await response.json();
+                const organized = data.choices[0].message.content.trim();
+                const items = organized.split('\n').filter(item => item.trim().length > 0);
+                
+                LANE_CONFIGS[categoryIndex].items = items;
+                saveData();
+                
+                const textarea = document.getElementById(`input-${categoryIndex}`);
+                textarea.value = items.join('\n');
+                
+            } catch (error) {
+                console.error('AI Error:', error);
+                alert('Error organizing with AI. Please try again.');
+            } finally {
+                aiBtn.classList.remove('loading');
+                aiBtn.textContent = 'AI Organize';
+            }
+        }
+
+        // Update slide position
+        function updateSlidePosition() {
+            const translateX = -currentSlideIndex * 100;
+            slidesContainer.style.transform = `translateX(${translateX}%)`;
+            
+            // Update header
+            if (currentSlideIndex === 0) {
+                headerText.textContent = 'Momentum';
+                backBtn.style.display = 'none';
+            } else {
+                headerText.textContent = LANE_CONFIGS[currentSlideIndex - 1].name;
+                backBtn.style.display = 'flex';
+            }
+        }
+
+        // Switch to slide
+        function switchToSlide(index) {
+            if (index < 0 || index >= LANE_CONFIGS.length + 1) return;
+            
+            // Stop music when leaving project pages
+            if (currentSlideIndex > 0 && index === 0) {
+                stopMusic();
+            }
+            
+            currentSlideIndex = index;
+            updateSlidePosition();
+            menuDropdown.classList.remove('show');
+        }
+
+        // Setup event listeners - Simple flick gesture
+        function setupEventListeners() {
+            // Touch events
+            slidesContainer.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            slidesContainer.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].clientX;
+                touchEndY = e.changedTouches[0].clientY;
+                
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const time = Date.now();
+                
+                // Simple flick detection
+                if (Math.abs(deltaX) > Math.abs(deltaY) && 
+                    Math.abs(deltaX) > SWIPE_THRESHOLD &&
+                    distance / 100 < 0.5) { // Quick gesture
+                    
+                    if (deltaX > 0 && currentSlideIndex > 0) {
+                        // Swipe right - go back
+                        switchToSlide(currentSlideIndex - 1);
+                    } else if (deltaX < 0 && currentSlideIndex < LANE_CONFIGS.length) {
+                        // Swipe left - go forward
+                        switchToSlide(currentSlideIndex + 1);
+                    }
+                }
+            }, { passive: true });
+
+            // Mouse events for desktop (simple click/drag)
+            let mouseDown = false;
+            let mouseStartX = 0;
+            
+            slidesContainer.addEventListener('mousedown', (e) => {
+                mouseDown = true;
+                mouseStartX = e.clientX;
+            });
+
+            slidesContainer.addEventListener('mousemove', (e) => {
+                if (!mouseDown) return;
+            });
+
+            slidesContainer.addEventListener('mouseup', (e) => {
+                if (!mouseDown) return;
+                mouseDown = false;
+                
+                const deltaX = e.clientX - mouseStartX;
+                if (Math.abs(deltaX) > 100) { // Simple threshold
+                    if (deltaX > 0 && currentSlideIndex > 0) {
+                        switchToSlide(currentSlideIndex - 1);
+                    } else if (deltaX < 0 && currentSlideIndex < LANE_CONFIGS.length) {
+                        switchToSlide(currentSlideIndex + 1);
+                    }
+                }
+            });
+
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentSlideIndex > 0) {
+                    switchToSlide(currentSlideIndex - 1);
+                } else if (e.key === 'ArrowRight' && currentSlideIndex < LANE_CONFIGS.length) {
+                    switchToSlide(currentSlideIndex + 1);
+                }
+            });
+
+            // Back button
+            backBtn.addEventListener('click', () => {
+                switchToSlide(0);
+            });
+
+            // Menu button
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menuDropdown.classList.toggle('show');
+            });
+            
+            // Menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const slideIndex = parseInt(item.getAttribute('data-slide'));
+                    switchToSlide(slideIndex);
+                });
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                    menuDropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

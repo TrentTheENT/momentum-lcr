@@ -5,5 +5,7 @@ node_modules/
 *.log
 dist/
 build/
-
+www/
+ios/
+android/
 .vercel
